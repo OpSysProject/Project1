@@ -104,7 +104,7 @@ def FCFS(p):
 				t += 3
 		for x in p:
 			if(x.id in ioend_time):
-				if(t == ioend_time[x.id]):
+				if(t == ioend_time[x.id] and (x not in queue)):
 					queue.append(x)
 					print("time " + str(t) + "ms: Process " + x.id + " completed I/O; added to ready queue " + printQueue(queue))
 					t -= 1
