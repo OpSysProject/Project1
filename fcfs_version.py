@@ -107,6 +107,7 @@ def FCFS(p):
 				if(t == ioend_time[x.id]):
 					queue.append(x)
 					print("time " + str(t) + "ms: Process " + x.id + " completed I/O; added to ready queue " + printQueue(queue))
+					t -= 1
 		t += 1
 	print("time " + str(t) + "ms: Simulator ended for FCFS")
 '''
