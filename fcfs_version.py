@@ -80,9 +80,9 @@ def FCFS(p):
 				queue.append(x)
 				print("time " + str(t) + "ms: Process " + x.id + " arrived and added to ready queue " + printQueue(queue))
 		if(busy == 0):
-			t += 4
-			start_time = t
 			if(queue != []):
+				t += 4
+				start_time = t
 				tmp = queue.pop(0)
 				end_time = start_time + tmp.cpu_burst_time
 				ioend_time[tmp.id] = end_time + 4 + tmp.io_time
