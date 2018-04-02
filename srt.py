@@ -96,7 +96,10 @@ def SRT(p):
 						ioend_time[x.id] = end_time + 4 + x.io_time
 						busy = 1
 						queue.append(tmp)
-						print("time " + str(t) + "ms: Process " + x.id + " started using the CPU with " + str(time_left) + "ms remaining " + printQueue(queue))
+						if time_left > 0:
+							print("time " + str(t) + "ms: Process " + x.id + " started using the CPU with " + str(time_left) + "ms remaining " + printQueue(queue))
+						else:
+							print("time " + str(t) + "ms: Process " + x.id + " started using the CPU "  + printQueue(queue))
 						cpu_start_t = t
 						current.append(x)
 					else:
@@ -111,14 +114,23 @@ def SRT(p):
 				end_time = start_time + tmp.cpu_burst_time
 				ioend_time[tmp.id] = end_time + 4 + tmp.io_time
 				busy = 1
-				print("time " + str(t) + "ms: Process " + tmp.id + " started using the CPU " + printQueue(queue))
+				if time_left > 0:
+					print("time " + str(t) + "ms: Process " + tmp.id + " started using the CPU with " + str(time_left) + "ms remaining " + printQueue(queue))
+				else:
+					print("time " + str(t) + "ms: Process " + tmp.id + " started using the CPU "  + printQueue(queue))
 				current.append(tmp)
 				cpu_start_t = t
+
+		
+		if(time_left+t < t+tmp.arrival_time):
+			end_time = t+tmp.arrival_time
 		if(t == end_time):
 			busy = 0
 			num[tmp.id] -= 1
-			print(str(time_left))
-
+			print(str(end_time))
+			# print(str(time_left))
+			# print(cpu_start_t)
+			# print("end time"+str(end_time))
 			if(num[tmp.id] == 0):
 				# print("time " + str(t) + "ms: FIX-Process " + tmp.id + " terminated " + printQueue(queue))
 				# current.remove(tmp)
@@ -131,6 +143,10 @@ def SRT(p):
 				print("time " + str(t) + "ms: Process " + tmp.id + " completed a CPU burst; " + str(num[tmp.id]) + " burst to go " + printQueue(queue))
 				print("time " + str(t) + "ms: Process " + tmp.id + " switching out of CPU; will block on I/O until time " + str(ioend_time[tmp.id]) + "ms " + printQueue(queue))
 				t += 3
+			else:
+				
+				t = t+time_left
+				print("time " + str(t) + "ms: FIX-Process " + tmp.id + " terminated " + printQueue(queue))
 			# else:
 			# 	print("no")
 			# else:
@@ -151,8 +167,12 @@ def SRT(p):
 						busy = 1
 						# queue.append(tmp)
 						queue.insert(0,tmp)
+						time_left = time_left-(t-cpu_start_t)+t_cs
 
-						print("time " + str(t) + "ms: Process " + x.id + " started using the CPU " + printQueue(queue))
+						if time_left > 0:
+							print("time " + str(t) + "ms: Process " + x.id + " started using the CPU with " + str(time_left) + "ms remaining " + printQueue(queue))
+						else:
+							print("time " + str(t) + "ms: Process " + x.id + " started using the CPU "  + printQueue(queue))
 						cpu_start_t = t
 						current.append(x)
 					else:
