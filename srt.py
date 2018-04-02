@@ -117,7 +117,8 @@ def SRT(p):
 		if(t == end_time):
 			busy = 0
 			num[tmp.id] -= 1
-			# print(str(time_left))
+			print(str(time_left))
+
 			if(num[tmp.id] == 0):
 				# print("time " + str(t) + "ms: FIX-Process " + tmp.id + " terminated " + printQueue(queue))
 				# current.remove(tmp)
@@ -126,10 +127,10 @@ def SRT(p):
 				print("time " + str(t) + "ms: Process " + tmp.id + " switching out of CPU; will block on I/O until time " + str(ioend_time[tmp.id]) + "ms " + printQueue(queue))
 				t += 3
 			# elif(num[tmp.id] == 1):
-			# if(num[tmp.id]>0):
-			# 	print("time " + str(t) + "ms: Process " + tmp.id + " completed a CPU burst; " + str(num[tmp.id]) + " burst to go " + printQueue(queue))
-			# 	print("time " + str(t) + "ms: Process " + tmp.id + " switching out of CPU; will block on I/O until time " + str(ioend_time[tmp.id]) + "ms " + printQueue(queue))
-			# 	t += 3
+			elif(num[tmp.id]>0):
+				print("time " + str(t) + "ms: Process " + tmp.id + " completed a CPU burst; " + str(num[tmp.id]) + " burst to go " + printQueue(queue))
+				print("time " + str(t) + "ms: Process " + tmp.id + " switching out of CPU; will block on I/O until time " + str(ioend_time[tmp.id]) + "ms " + printQueue(queue))
+				t += 3
 			# else:
 			# 	print("no")
 			# else:
@@ -148,7 +149,9 @@ def SRT(p):
 						end_time = start_time + x.cpu_burst_time
 						ioend_time[x.id] = end_time + 4 + x.io_time
 						busy = 1
-						queue.append(tmp)
+						# queue.append(tmp)
+						queue.insert(0,tmp)
+
 						print("time " + str(t) + "ms: Process " + x.id + " started using the CPU " + printQueue(queue))
 						cpu_start_t = t
 						current.append(x)
