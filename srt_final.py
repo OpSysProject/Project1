@@ -224,8 +224,7 @@ def SRT(p):
 					'''errornous one that shows time is here'''
 					if time_left_arr != []:
 						time_left = time_left_arr.pop()
-					print(time_left)
-					print(tmp.cpu_burst_time)
+	
 					if time_left > 0 and time_left != tmp.cpu_burst_time:
 						print("time " + str(t) + "ms: Process " + tmp.id + " started using the CPU with " + str(time_left) + "ms remaining " + printQueue(queue))
 						end_time = t+time_left
@@ -257,7 +256,7 @@ def SRT(p):
 					print("time " + str(t) + "ms: Process " + tmp.id + " switching out of CPU; will block on I/O until time " + str(ioend_time[tmp.id]) + "ms " + printQueue(queue))
 					t += 3
 					end_time = end_time + 4 + x.io_time
-					
+
 					time_left = 0
 
 			''' At each io end time'''
