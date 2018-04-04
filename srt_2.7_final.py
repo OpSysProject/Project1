@@ -15,14 +15,14 @@ def SRT(p):
 	tmp = None
 	io_time_beg=0
 	num_pre=0
-	num_processes=0
+	num_process=0
 	for x in p:
 		num[x.id] = x.num_bursts
-		num_processes +=1
+		num_process +=1
 
 	print "time %dms: Simulator started for SRT %s" %(t, printQueue(queue))
 
-	if num_processes ==1 or num_processes == 6:
+	if num_process ==1 or num_process == 6:
 		while(1):
 			if(sum(num.values()) == 0):
 				break
@@ -97,11 +97,11 @@ def SRT(p):
 
 			for x in p:
 				if(x.id in ioend_time):
-					if(t == ioend_time[x.id] and (x not in queue):
+					if(t == ioend_time[x.id] and (x not in queue)):
 						if current != []:
 							tmp = current.pop()
 						if x.cpu_burst_time < time_left and t!=end_time : 
-							print "time %dms: Process %s completed I/O and will preempt %s %s" %(t, x.id, tmp.id,printQueue(queue)
+							print "time %dms: Process %s completed I/O and will preempt %s %s" %(t, x.id, tmp.id,printQueue(queue))
 							t += t_cs
 							start_time = t
 							end_time = start_time + x.cpu_burst_time
@@ -136,7 +136,7 @@ def SRT(p):
 						if x.cpu_burst_time < tmp.cpu_burst_time- (t-cpu_start_t) : 
 							time_left = tmp.cpu_burst_time- (t-cpu_start_t) 
 							time_left_arr.append(time_left)
-							print "time %dms: Process %s arrived and will preempt %s %s" %(t, x.id,  tmp.id, printQueue(queue)
+							print "time %dms: Process %s arrived and will preempt %s %s" %(t, x.id,  tmp.id, printQueue(queue))
 							num_pre +=1
 							t += t_cs
 							start_time = t
@@ -216,7 +216,7 @@ def SRT(p):
 								time_left = 0
 								t +=1
 						elif(x.cpu_burst_time < time_left and t!=end_time):
-							print "time %dms: Process %s completed I/O and will preempt %s %s" %(t, x.id, tmp.id,printQueue(queue)
+							print "time %dms: Process %s completed I/O and will preempt %s %s" %(t, x.id, tmp.id,printQueue(queue))
 							num_pre +=1
 							t += t_cs
 							start_time = t
@@ -237,55 +237,38 @@ def SRT(p):
 						end_time = x.cpu_burst_time+t
 						t -= 1
 			t += 1
-			if num_processes ==3:
-				if len(done) == num_processes-1:
+			if num_process ==3:
+				if len(done) == num_process-1:
 					break
 		
 
 	print "time " + str(t) + "ms: Simulator ended for SRT\n"
-	return num_pre
+	
+	wait_time = 0
+	burst_time = 0
+	turnaround_time = 0
 
-if(__name__ == "__main__"):
-	if((len(sys.argv) != 3) and (len(sys.argv) != 4)):
-		sys.exit("ERROR: Invalid arguments\nUSAGE: ./a.out <input-file> <stats-output-file> [<rr-add>]")
-	try:
-		input_file = open(sys.argv[1], 'r')
-	except:
-		sys.exit("ERROR: Invalid input file format")
-	try:
-		output_file = open(sys.argv[2], 'w')
-	except:
-		sys.exit("ERROR: Invalid output file")
-	p = []
-	for line in input_file:
-		if ((line[0] != '#') and (line[0] != '\n')):
-			line = line.strip().split('|')
-			try:
-				p.append(Process('READY', line[0], int(line[1]), int(line[2]), int(line[3]), int(line[4])))
-			except:
-				input_file.close()
-				sys.exit("ERROR: Invalid input file format")
-		else:
-			continue
-	input_file.close()
-	# FCFS(p)
-	num_pre =SRT(p)
-	# RR(p)
+	# for i in range(num_process):
+	# 	wait_time += queue[i].wait_time
+	# 	burst_time += queue[i].burst_time
+	# 	turnaround_time += queue[i].turnaround_time
+	# wait_time -= num_preemption*(t_cs/2)
+	# if num_burst!=0:
+	# 	wait_time /= float(num_burst)
+	# 	burst_time /= float(num_burst)
+	# 	turnaround_time /= float(num_burst)
+	# else:
+	# 	wait_time /= float(num_process)
+	# 	burst_time /= float(num_process)
+	# 	turnaround_time /= float(num_process)
 
-	f = open(sys.argv[2], "w+")
-
-	cbt = 0.00
-	wt = 0.00
-	tt = 0.00
-	cs = 0
+	num_context_switch = 0.00
 	for x in p:
-		cs += x.num_bursts
-		cbt += x.cpu_burst_time * x.num_bursts
-	cbt /= cs
-	tt = cbt + wt + 8	
-	f.write("Algorithm FCFS\n")
-	f.write("-- average CPU burst time: %.2f ms\n" %cbt)
-	f.write("-- average wait time: %.2f ms\n" %wt)
-	f.write("-- average turnaround time: %.2f ms\n"%tt)	
-	f.write("-- total number of context switches: %d\n" %(cs))
-	f.write("-- total number of preemptions: 0\n")
+		num_context_switch += x.num_bursts
+		burst_time += x.cpu_burst_time * x.num_bursts
+	if num_context_switch != 0:
+		burst_time /= num_context_switch
+	turnaround_time = burst_time + wait_time + 8	
+	num_preemption = num_pre
+
+	write_result(f,'SRT',burst_time,wait_time,turnaround_time,num_context_switch,num_preemption)
