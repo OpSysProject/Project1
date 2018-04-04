@@ -397,7 +397,7 @@ def main(argv):
 		sys.exit("ERROR: Invalid arguments\nUsage: ./a.out <input-file> <stats-output-file> [<rr-add>]")
 	input_file = os.getcwd()+'/'+argv[1]
 	output_file = argv[2]
-	out = open(output_file,'w')
+	out = open(output_file,'a')
 	if len(argv)==4:
 		rr_add = argv[3]
 	else:
@@ -420,7 +420,9 @@ def main(argv):
 				queue.put(proc)
 				rr_queue.append(proc)
 		# RR algorithm
+		f.close()
 		RR(out,rr_queue,rr_add, min_arrival)
+		out.close()
 	except ValueError as e:
 		sys.exit("ERROR: Invalid input file format")
 
@@ -448,7 +450,9 @@ if __name__ == "__main__":
 				proc = Process('READY', proc_id, arrival_time, cpu_burst_time, num_bursts, io_time)
 				queue.put(proc)
 				rr_queue.append(proc)
+		f.close()
 		FCFS(out,rr_queue)
+		out.close()
 	except ValueError as e:
 		sys.exit("ERROR: Invalid input file format")
 	main(sys.argv)
