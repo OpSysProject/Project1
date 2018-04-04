@@ -700,7 +700,41 @@ def SRT(f, p):
 	num_preemption = num_pre
 
 	write_result(f,'SRT',burst_time,wait_time,turnaround_time,num_context_switch,num_preemption)
-	
+
+def _main(argv):
+	if len(argv)!=4 and len(argv)!=3:
+		sys.exit("ERROR: Invalid arguments\nUsage: ./a.out <input-file> <stats-output-file> [<rr-add>]")
+	input_file = os.getcwd()+'/'+argv[1]
+	output_file = argv[2]
+	out = open(output_file,'a')
+	if len(argv)==4:
+		rr_add = argv[3]
+	else:
+		rr_add = 'END'
+	# initialize queue
+	queue = Queue.PriorityQueue()
+	rr_queue = []
+	# process file
+	try:
+		f = open(input_file)
+		min_arrival = sys.maxint
+		for line in f:
+			line = line.strip()
+			if line and not line.startswith('#'):
+				ele = line.split('|')
+				proc_id,arrival_time,cpu_burst_time,num_bursts,io_time = ele
+				if int(arrival_time)<min_arrival:
+					min_arrival = int(arrival_time)
+				proc = Process('READY', proc_id, arrival_time, cpu_burst_time, num_bursts, io_time)
+				queue.put(proc)
+				rr_queue.append(proc)
+		# RR algorithm
+		f.close()
+		SRT(out, rr_queue)
+		out.close()
+	except ValueError as e:
+		sys.exit("ERROR: Invalid input file format")
+
 if __name__ == "__main__":
 	if len(sys.argv)!=4 and len(sys.argv)!=3:
 		sys.exit("ERROR: Invalid arguments\nUsage: ./a.out <input-file> <stats-output-file> [<rr-add>]")
@@ -729,10 +763,10 @@ if __name__ == "__main__":
 				rr_queue.append(proc)
 		f.close()
 		
-		SRT(out, rr_queue)
 		FCFS(out,rr_queue)
 	
 		out.close()
 	except ValueError as e:
 		sys.exit("ERROR: Invalid input file format")
+	_main(sys.argv)
 	main(sys.argv)
