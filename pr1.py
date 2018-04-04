@@ -1,6 +1,8 @@
-# Zhiying Jiang
-# Tianyi Zhang
-# Angela Su
+'''
+Zhiying Jiang, jiangz6
+Tianyi Zhang, zhangt17
+Angela Su, sua2
+'''
 
 import sys
 import Queue
@@ -33,7 +35,6 @@ class Process:
 		self.burst_time = 0
 		self.running_time = 0
 		self.first = True
-		self.last_added = 0
 	def __cmp__(self, other):
 		if self.cpu_burst_time > other.cpu_burst_time:
 			return 1
@@ -89,52 +90,6 @@ def add_wait_time(queue,p,time):
 		else:
 			new_queue.append(process)
 	return new_queue
-
-
-def main(argv):
-	# process arguments
-	if len(argv)!=4 and len(argv)!=3:
-		sys.exit("ERROR: Invalid arguments\nUsage: ./a.out <input-file> <stats-output-file> [<rr-add>]")
-	input_file = os.getcwd()+'/'+argv[1]
-	output_file = argv[2]
-	out = open(output_file,'w')
-	if len(argv)==4:
-		rr_add = argv[3]
-	else:
-		rr_add = 'END'
-	# initialize queue
-	queue = Queue.PriorityQueue()
-	rr_queue = []
-	# process file
-	try:
-		f = open(input_file)
-		min_arrival = sys.maxint
-		for line in f:
-			line = line.strip()
-			if line and not line.startswith('#'):
-				ele = line.split('|')
-				proc_id,arrival_time,cpu_burst_time,num_bursts,io_time = ele
-				if int(arrival_time)<min_arrival:
-					min_arrival = int(arrival_time)
-				proc = Process('READY', proc_id, arrival_time, cpu_burst_time, num_bursts, io_time)
-				queue.put(proc)
-				rr_queue.append(proc)
-		# FCFS algorithm
-		FCFS(out,rr_queue)
-		# RR algorithm
-		RR(out,rr_queue,rr_add, min_arrival)
-	except ValueError as e:
-		sys.exit("ERROR: Invalid input file format")
-
-def convert_str(l):
-	res = '[Q'
-	if l==[]:
-		return '[Q <empty>]'
-	for e in l:
-		res+=' '+e.id
-	res+=']'
-	return res
-
 
 def printQueue(queue):
 	if(queue == []):
@@ -238,6 +193,7 @@ def FCFS(f,queue, t_cs = 8):
 			context_switch = False
 			switch_start = time
 	print "time %dms: Simulator ended for FCFS"%(time+t_cs/2-1)
+	print ""
 	wait_time = 0
 	burst_time = 0
 	turnaround_time = 0
@@ -255,6 +211,9 @@ def FCFS(f,queue, t_cs = 8):
 		burst_time /= float(num_process)
 		turnaround_time /= float(num_process)
 	write_result(f,'FCFS',burst_time,wait_time,turnaround_time,num_context_switch,num_preemption)
+
+def write_result(f,alg,bt,wt,tt,nc,np):
+	f.write("Algorithm %s\n-- average CPU burst time: %.2f ms\n-- average wait time: %.2f ms\n-- average turnaround time: %.2f ms\n-- total number of context switches: %d\n-- total number of preemptions: %d\n"%(alg,bt,wt,tt,nc,np))
 
 def RR(f,queue,rr_add,min_arrival,t_slice=80, t_cs = 8):
 	time = 0
@@ -294,9 +253,9 @@ def RR(f,queue,rr_add,min_arrival,t_slice=80, t_cs = 8):
 				process = ready_queue.pop(0)
 				using_cpu = queue.index(process)
 				if queue[using_cpu].running_time>0:
-					print "time %dms: Process %s started using the CPU with %dms remaining %s"%(time,queue[using_cpu].id,queue[using_cpu].get_cpu_burst_time()-queue[using_cpu].running_time, convert_str(ready_queue))
+					print "time %dms: Process %s started using the CPU with %dms remaining %s"%(time,queue[using_cpu].id,queue[using_cpu].get_cpu_burst_time()-queue[using_cpu].running_time, printQueue(ready_queue))
 				else:
-					print "time %dms: Process %s started using the CPU %s"%(time, queue[using_cpu].id, convert_str(ready_queue))
+					print "time %dms: Process %s started using the CPU %s"%(time, queue[using_cpu].id, printQueue(ready_queue))
 				context_switch = False
 
 				#print "before: process",queue[using_cpu].id,"has wait_time",queue[using_cpu].wait_time,"at time %dms"%time
@@ -332,17 +291,17 @@ def RR(f,queue,rr_add,min_arrival,t_slice=80, t_cs = 8):
 				queue[p].running_time = 0
 				using_cpu = -1
 				if queue[p].num_bursts == 0:
-					print "time %dms: Process %s terminated %s"%(time, queue[p].id, convert_str(ready_queue))
+					print "time %dms: Process %s terminated %s"%(time, queue[p].id, printQueue(ready_queue))
 				else:
 					if queue[p].num_bursts > 1:
-						print "time %dms: Process %s completed a CPU burst; %d bursts to go %s"%(time, queue[p].id, queue[p].num_bursts, convert_str(ready_queue))
+						print "time %dms: Process %s completed a CPU burst; %d bursts to go %s"%(time, queue[p].id, queue[p].num_bursts, printQueue(ready_queue))
 					else:
-						print "time %dms: Process %s completed a CPU burst; %d burst to go %s"%(time, queue[p].id, queue[p].num_bursts, convert_str(ready_queue))
+						print "time %dms: Process %s completed a CPU burst; %d burst to go %s"%(time, queue[p].id, queue[p].num_bursts, printQueue(ready_queue))
 					# process with io
 					if queue[p].io_time>0:
 						queue[p].io = True
 						queue[p].io_finish_time = time + queue[p].io_time + t_cs/2
-						print "time %dms: Process %s switching out of CPU; will block on I/O until time %dms %s"%(time, queue[p].id, queue[p].io_finish_time,convert_str(ready_queue))
+						print "time %dms: Process %s switching out of CPU; will block on I/O until time %dms %s"%(time, queue[p].id, queue[p].io_finish_time,printQueue(ready_queue))
 					else:
 						#put back
 						queue[p].last_added = time
@@ -354,7 +313,7 @@ def RR(f,queue,rr_add,min_arrival,t_slice=80, t_cs = 8):
 				if incomplete:
 					queue[p].running_time += (time - queue[p].cpu_start_time)
 					if ready_queue!=[]:
-						print "time %dms: Time slice expired; process %s preempted with %dms to go %s"%(time, queue[p].id, queue[p].get_cpu_burst_time()-queue[p].running_time, convert_str(ready_queue))
+						print "time %dms: Time slice expired; process %s preempted with %dms to go %s"%(time, queue[p].id, queue[p].get_cpu_burst_time()-queue[p].running_time, printQueue(ready_queue))
 						# if rr_add=="BEGINNING":
 						# 	ready_queue.insert(0,queue[p])
 						# else:
@@ -368,7 +327,7 @@ def RR(f,queue,rr_add,min_arrival,t_slice=80, t_cs = 8):
 							context_switch=True
 							switch_start = time
 					else:
-						print "time %dms: Time slice expired; no preemption because ready queue is empty %s"%(time, convert_str(ready_queue))
+						print "time %dms: Time slice expired; no preemption because ready queue is empty %s"%(time, printQueue(ready_queue))
 						queue[p].cpu_start_time = time
 						slice_now+=1
 			else:
@@ -388,7 +347,7 @@ def RR(f,queue,rr_add,min_arrival,t_slice=80, t_cs = 8):
 					ready_queue.insert(0,queue[i])
 				else:
 					ready_queue.append(queue[i])
-				print "time %dms: Process %s completed I/O; added to ready queue %s"%(time,queue[i].id,convert_str(ready_queue))
+				print "time %dms: Process %s completed I/O; added to ready queue %s"%(time,queue[i].id,printQueue(ready_queue))
 				queue[i].io = False
 		# cpu
 		for k in range(num_process):
@@ -401,7 +360,7 @@ def RR(f,queue,rr_add,min_arrival,t_slice=80, t_cs = 8):
 					ready_queue.append(queue[k])
 				queue[k].single_wait_time=0
 				queue[k].first=False
-				print "time %dms: Process %s arrived and added to ready queue %s"%(p.arrival_time,p.id,convert_str(ready_queue))
+				print "time %dms: Process %s arrived and added to ready queue %s"%(p.arrival_time,p.id,printQueue(ready_queue))
 		for j in range(num_process):
 			if using_cpu != j and (not queue[j].io):
 				queue[j].single_wait_time+=1
@@ -432,11 +391,64 @@ def RR(f,queue,rr_add,min_arrival,t_slice=80, t_cs = 8):
 	# print "turnaround time is ",turnaround_time
 	write_result(f,'RR',burst_time,wait_time,turnaround_time,num_context_switch,num_preemption)
 
-
-def write_result(f,alg,bt,wt,tt,nc,np):
-	f.write("Algorithm %s\n-- average CPU burst time: %.2f ms\n-- average wait time: %.2f ms\n-- average turnaround time: %.2f ms\n-- total number of context switches: %d\n-- total number of preemptions: %d\n"%(alg,bt,wt,tt,nc,np))
+def main(argv):
+	# process arguments
+	if len(argv)!=4 and len(argv)!=3:
+		sys.exit("ERROR: Invalid arguments\nUsage: ./a.out <input-file> <stats-output-file> [<rr-add>]")
+	input_file = os.getcwd()+'/'+argv[1]
+	output_file = argv[2]
+	out = open(output_file,'w')
+	if len(argv)==4:
+		rr_add = argv[3]
+	else:
+		rr_add = 'END'
+	# initialize queue
+	queue = Queue.PriorityQueue()
+	rr_queue = []
+	# process file
+	try:
+		f = open(input_file)
+		min_arrival = sys.maxint
+		for line in f:
+			line = line.strip()
+			if line and not line.startswith('#'):
+				ele = line.split('|')
+				proc_id,arrival_time,cpu_burst_time,num_bursts,io_time = ele
+				if int(arrival_time)<min_arrival:
+					min_arrival = int(arrival_time)
+				proc = Process('READY', proc_id, arrival_time, cpu_burst_time, num_bursts, io_time)
+				queue.put(proc)
+				rr_queue.append(proc)
+		# RR algorithm
+		RR(out,rr_queue,rr_add, min_arrival)
+	except ValueError as e:
+		sys.exit("ERROR: Invalid input file format")
 
 if __name__ == "__main__":
-    main(sys.argv)
-
-
+	if len(sys.argv)!=4 and len(sys.argv)!=3:
+		sys.exit("ERROR: Invalid arguments\nUsage: ./a.out <input-file> <stats-output-file> [<rr-add>]")
+	input_file = os.getcwd()+'/'+sys.argv[1]
+	output_file = sys.argv[2]
+	out = open(output_file,'w')
+	if len(sys.argv)==4:
+		rr_add = sys.argv[3]
+	else:
+		rr_add = 'END'
+	queue = Queue.PriorityQueue()
+	rr_queue = []
+	try:
+		f = open(input_file)
+		for line in f:
+			line = line.strip()
+			if line and not line.startswith('#'):
+				ele = line.split('|')
+				proc_id,arrival_time,cpu_burst_time,num_bursts,io_time = ele
+				if int(arrival_time)<sys.maxint:
+					sys.maxint = int(arrival_time)
+				proc = Process('READY', proc_id, arrival_time, cpu_burst_time, num_bursts, io_time)
+				queue.put(proc)
+				rr_queue.append(proc)
+		FCFS(out,rr_queue)
+	except ValueError as e:
+		sys.exit("ERROR: Invalid input file format")
+	main(sys.argv)
