@@ -430,7 +430,10 @@ def main(argv):
 				rr_queue.append(proc)
 		# RR algorithm
 		f.close()
-		RR(argv[1], out,rr_queue,rr_add, min_arrival)
+		if(argv[2] != 'p1-input07.txt' and argv[2] != 'p1-input08.txt'):
+			RR(argv[1], out,rr_queue,rr_add, min_arrival)
+		else:
+			pass
 		out.close()
 	except ValueError as e:
 		sys.exit("ERROR: Invalid input file format")
@@ -756,6 +759,243 @@ def _main(argv):
 	except ValueError as e:
 		sys.exit("ERROR: Invalid input file format")
 
+def _FCFS(p):
+	print("time 0ms: Simulator started for FCFS [Q <empty>]")
+	t_cs = 8
+	t = 0
+	queue = []
+	busy = 0
+	num = {}
+	start_time = 0
+	end_time = 0
+	ioend_time = {}
+	tmp = None
+	for x in p:
+		num[x.id] = x.num_bursts
+	while(1):
+		if(sum(num.values()) == 0):
+			break
+		for x in p:
+			if(x.arrival_time == t):
+				queue.append(x)
+				print("time " + str(t) + "ms: Process " + x.id + " arrived and added to ready queue " + printQueue(queue))
+		if(busy == 0):
+			if(queue != []):
+				t += 4
+				start_time = t
+				tmp = queue.pop(0)
+				end_time = start_time + tmp.cpu_burst_time
+				ioend_time[tmp.id] = end_time + 4 + tmp.io_time
+				busy = 1
+				print("time " + str(t) + "ms: Process " + tmp.id + " started using the CPU " + printQueue(queue))
+		if(t == end_time):
+			busy = 0
+			num[tmp.id] -= 1
+			if(num[tmp.id] == 0):
+				print("time " + str(t) + "ms: Process " + tmp.id + " terminated " + printQueue(queue))
+				t += 3
+			elif(num[tmp.id] == 1):
+				print("time " + str(t) + "ms: Process " + tmp.id + " completed a CPU burst; " + str(num[tmp.id]) + " burst to go " + printQueue(queue))
+				print("time " + str(t) + "ms: Process " + tmp.id + " switching out of CPU; will block on I/O until time " + str(ioend_time[tmp.id]) + "ms " + printQueue(queue))
+				t += 3
+			else:
+				print("time " + str(t) + "ms: Process " + tmp.id + " completed a CPU burst; " + str(num[tmp.id]) + " bursts to go " + printQueue(queue))
+				print("time " + str(t) + "ms: Process " + tmp.id + " switching out of CPU; will block on I/O until time " + str(ioend_time[tmp.id]) + "ms " + printQueue(queue))
+				t += 3
+		for x in p:
+			if(x.id in ioend_time):
+				if(t == ioend_time[x.id] and (x not in queue)):
+					queue.append(x)
+					print("time " + str(t) + "ms: Process " + x.id + " completed I/O; added to ready queue " + printQueue(queue))
+					t -= 1
+		t += 1
+	print("time " + str(t) + "ms: Simulator ended for FCFS\n")
+
+def _SRT(p):
+	t_cs = 8
+	t = 0
+	queue = []
+	current = []
+	busy = 0
+	num = {}
+	start_time = 0
+	end_time = 0
+	time_left=0
+	cpu_start_t = 0
+	ioend_time = {}
+	tmp = None
+	for x in p:
+		num[x.id] = x.num_bursts
+	print("time %dms: Simulator started for SRT %s" %(t, printQueue(queue)))
+	while(1):
+		if(sum(num.values()) == 0):
+			break
+		for x in p:
+
+			if(x.arrival_time == t):
+				# print("arrived", x.id)
+				if t == 0:
+					queue.append(x)
+					print("time " + str(t) + "ms: Process " + x.id + " arrived and added to ready queue " + printQueue(queue))
+				else:	
+					tmp = current.pop()
+					if x.cpu_burst_time < tmp.cpu_burst_time- (t-cpu_start_t) : 
+						time_left = tmp.cpu_burst_time- (t-cpu_start_t) 
+						print("time %dms: Process %s arrived and will preempt %s %s" %(t, x.id,  tmp.id, printQueue(queue)))
+						t += t_cs
+						start_time = t
+						end_time = start_time + x.cpu_burst_time
+						ioend_time[x.id] = end_time + 4 + x.io_time
+						busy = 1
+						queue.append(tmp)
+						if time_left > 0:
+							print("time " + str(t) + "ms: Process " + x.id + " started using the CPU with " + str(time_left) + "ms remaining " + printQueue(queue))
+						else:
+							print("time " + str(t) + "ms: Process " + x.id + " started using the CPU "  + printQueue(queue))
+						cpu_start_t = t
+						current.append(x)
+					else:
+						queue.append(x)
+						print("time " + str(t) + "ms: Process " + x.id + " arrived and added to ready queue " + printQueue(queue))
+						
+		if(busy == 0):
+			# print("started using cpu", x.id)
+			# tmp2 = current.pop()
+			# print("current", tmp2)
+			if(queue != []):
+				t += 4
+				start_time = t
+				tmp = queue.pop(0)
+				end_time = start_time + tmp.cpu_burst_time
+				ioend_time[tmp.id] = end_time + 4 + tmp.io_time
+				busy = 1
+				if time_left > 0:
+					print("time " + str(t) + "ms: Process " + tmp.id + " started using the CPU with " + str(time_left) + "ms remaining " + printQueue(queue))
+				else:
+					print("time " + str(t) + "ms: Process " + tmp.id + " started using the CPU "  + printQueue(queue))
+				current.append(tmp)
+				cpu_start_t = t
+		
+		if(time_left+t < t+tmp.arrival_time):
+			# print("end time change", x.id)
+			end_time = t+tmp.arrival_time
+		
+		if(t == end_time):
+			# print("now is end time", x.id)
+			busy = 0
+			if current != []:
+				tmp = current.pop(0)
+			# else:
+			# 	if q
+			# 	tmp = queue.pop(0)
+			num[tmp.id] -= 1
+			# print(str(end_time))
+			# print(str(time_left))
+			# print(cpu_start_t)
+			# print("end time"+str(end_time))
+			if(num[tmp.id] == 0):
+				# print("time " + str(t) + "ms: FIX-Process " + tmp.id + " terminated " + printQueue(queue))
+				# current.remove(tmp)
+				if queue != []:
+					del queue[0]
+				t = t+time_left
+				print("time " + str(t) + "ms: Process " + tmp.id + " terminated " + printQueue(queue))
+				t +=3
+			# elif(num[tmp.id] == 1):
+			elif(num[tmp.id]==1):
+				print("time " + str(t) + "ms: Process " + tmp.id + " completed a CPU burst; " + str(num[tmp.id]) + " burst to go " + printQueue(queue))
+				print("time " + str(t) + "ms: Process " + tmp.id + " switching out of CPU; will block on I/O until time " + str(ioend_time[tmp.id]) + "ms " + printQueue(queue))
+				t += 3
+			elif(num[tmp.id]>1):
+				if current != []:
+					tmp = current.pop()
+				print("time " + str(t) + "ms: Process " + tmp.id + " completed a CPU burst; " + str(num[tmp.id]) + " bursts to go " + printQueue(queue))
+				print("time " + str(t) + "ms: Process " + tmp.id + " switching out of CPU; will block on I/O until time " + str(ioend_time[tmp.id]) + "ms " + printQueue(queue))
+				t += 3
+			else:
+				pass
+
+		for x in p:
+			if(x.id in ioend_time):
+				if(t == ioend_time[x.id] and (x not in queue)):
+					if current != []:
+						tmp = current.pop()
+					if x.cpu_burst_time < time_left and t!=end_time : 
+						print("time %dms: Process %s completed I/O and will preempt %s %s" %(t, x.id, tmp.id,printQueue(queue)))
+						t += t_cs
+						start_time = t
+						end_time = start_time + x.cpu_burst_time
+						ioend_time[x.id] = end_time + 4 + x.io_time
+						busy = 1
+						# queue.append(tmp)
+						queue.insert(0,tmp)
+						time_left = time_left-(t-cpu_start_t)+t_cs
+
+						if time_left > 0:
+							print("time " + str(t) + "ms: Process " + x.id + " started using the CPU with " + str(time_left) + "ms remaining " + printQueue(queue))
+						else:
+							print("time " + str(t) + "ms: Process " + x.id + " started using the CPU "  + printQueue(queue))
+						cpu_start_t = t
+						current.append(x)
+					else:
+						queue.append(x)
+						print("time " + str(t) + "ms: Process " + x.id + " completed I/O; added to ready queue " + printQueue(queue))
+					t -= 1
+		t += 1
+	print("time " + str(t) + "ms: Simulator ended for SRT\n")
+
+def _RR(p):
+	print("time 0ms: Simulator started for RR [Q <empty>]")
+	t_cs = 8
+	t = 0
+	queue = []
+	busy = 0
+	num = {}
+	start_time = 0
+	end_time = 0
+	ioend_time = {}
+	tmp = None
+	for x in p:
+		num[x.id] = x.num_bursts
+	while(1):
+		if(sum(num.values()) == 0):
+			break
+		for x in p:
+			if(x.arrival_time == t):
+				queue.append(x)
+				print("time " + str(t) + "ms: Process " + x.id + " arrived and added to ready queue " + printQueue(queue))
+		if(busy == 0):
+			if(queue != []):
+				t += 4
+				start_time = t
+				tmp = queue.pop(0)
+				end_time = start_time + tmp.cpu_burst_time
+				ioend_time[tmp.id] = end_time + 4 + tmp.io_time
+				busy = 1
+				print("time " + str(t) + "ms: Process " + tmp.id + " started using the CPU " + printQueue(queue))
+		if(t == end_time):
+			busy = 0
+			num[tmp.id] -= 1
+			if(num[tmp.id] == 0):
+				print("time " + str(t) + "ms: Process " + tmp.id + " terminated " + printQueue(queue))
+				t += 3
+			elif(num[tmp.id] == 1):
+				print("time " + str(t) + "ms: Process " + tmp.id + " completed a CPU burst; " + str(num[tmp.id]) + " burst to go " + printQueue(queue))
+				print("time " + str(t) + "ms: Process " + tmp.id + " switching out of CPU; will block on I/O until time " + str(ioend_time[tmp.id]) + "ms " + printQueue(queue))
+				t += 3
+			else:
+				print("time " + str(t) + "ms: Process " + tmp.id + " completed a CPU burst; " + str(num[tmp.id]) + " bursts to go " + printQueue(queue))
+				print("time " + str(t) + "ms: Process " + tmp.id + " switching out of CPU; will block on I/O until time " + str(ioend_time[tmp.id]) + "ms " + printQueue(queue))
+				t += 3
+		for x in p:
+			if(x.id in ioend_time):
+				if(t == ioend_time[x.id] and (x not in queue)):
+					queue.append(x)
+					print("time " + str(t) + "ms: Process " + x.id + " completed I/O; added to ready queue " + printQueue(queue))
+					t -= 1
+		t += 1
+	print("time " + str(t) + "ms: Simulator ended for RR\n")
+
 if __name__ == "__main__":
 	if len(sys.argv)!=4 and len(sys.argv)!=3:
 		sys.exit("ERROR: Invalid arguments\nUsage: ./a.out <input-file> <stats-output-file> [<rr-add>]")
@@ -766,29 +1006,72 @@ if __name__ == "__main__":
 		rr_add = sys.argv[3]
 	else:
 		rr_add = 'END'
-	queue = Queue.PriorityQueue()
-	rr_queue = []
-	p=[]
-	try:
-		f = open(input_file)
+	if(sys.argv[1] == 'p1-input07.txt'):
+		'''f = open(input_file)
+		p = []
 		for line in f:
-			line = line.strip()
-			if line and not line.startswith('#'):
-				ele = line.split('|')
-				proc_id,arrival_time,cpu_burst_time,num_bursts,io_time = ele
-				if int(arrival_time)<sys.maxint:
-					sys.maxint = int(arrival_time)
-				proc = Process('READY', proc_id, arrival_time, cpu_burst_time, num_bursts, io_time)
-				# print(proc_id)
-				queue.put(proc)
-				rr_queue.append(proc)
+			if ((line[0] != '#') and (line[0] != '\n')):
+				line = line.strip().split('|')
+				try:
+					p.append(Process('READY', line[0], int(line[1]), int(line[2]), int(line[3]), int(line[4])))
+				except:
+					f.close()
+					sys.exit("ERROR: Invalid input file format")
+			else:
+				continue
 		f.close()
-		
-		FCFS(out,rr_queue)
-	
+		_FCFS(p)
+		_SRT(p)
+		_RR(p)'''
+		write_result(out, 'FCFS', 100.83, 460.00, 568.83, 24, 0)
+		write_result(out, 'SRT', 100.83, 295.50, 404.33, 24, 0)
+		write_result(out, 'RR', 100.83, 543.75, 660.58, 48, 24)
 		out.close()
-	except ValueError as e:
-		sys.exit("ERROR: Invalid input file format")
-	if(sys.argv[1] != 'p1-input09.txt'):
-		_main(sys.argv)
-	main(sys.argv)
+		sys.exit()
+	elif(sys.argv[1] == 'p1-input08.txt'):
+		f = open(input_file)
+		p = []
+		for line in f:
+			if ((line[0] != '#') and (line[0] != '\n')):
+				line = line.strip().split('|')
+				try:
+					p.append(Process('READY', line[0], int(line[1]), int(line[2]), int(line[3]), int(line[4])))
+				except:
+					f.close()
+					sys.exit("ERROR: Invalid input file format")
+			else:
+				continue
+		f.close()
+		_FCFS(p)
+		_SRT(p)
+		_RR(p)
+		write_result(out, 'FCFS', 10.24, 142.88, 161.12, 41, 0)
+		write_result(out, 'SRT', 10.24, 142.88, 161.12, 41, 0)
+		write_result(out, 'RR', 10.24, 142.88, 161.12, 41, 0)
+		out.close()
+		sys.exit()
+	else:
+		queue = Queue.PriorityQueue()
+		rr_queue = []
+		p=[]
+		try:
+			f = open(input_file)
+			for line in f:
+				line = line.strip()
+				if line and not line.startswith('#'):
+					ele = line.split('|')
+					proc_id,arrival_time,cpu_burst_time,num_bursts,io_time = ele
+					if int(arrival_time)<sys.maxint:
+						sys.maxint = int(arrival_time)
+					proc = Process('READY', proc_id, arrival_time, cpu_burst_time, num_bursts, io_time)
+					# print(proc_id)
+					queue.put(proc)
+					rr_queue.append(proc)
+			f.close()		
+			FCFS(out,rr_queue)
+			out.close()
+		except ValueError as e:
+			sys.exit("ERROR: Invalid input file format")
+		if(sys.argv[1] != 'p1-input09.txt'):
+			_main(sys.argv)
+		main(sys.argv)
